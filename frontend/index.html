@@ -11,15 +11,44 @@
   <div class="shell">
     <div class="header">
       <div>
-        <div class="title">PPG Live</div>
+        <div class="title">PPG en Vivo</div>
         <div class="subtitle">Visualización en tiempo real</div>
       </div>
+      <div class="tabs">
+        <button id="tab-raw" class="tab active">Original</button>
+        <button id="tab-processed" class="tab">Procesado</button>
+      </div>
     </div>
-    <div class="chart-wrap">
-      <div class="charts-column">
+    <div id="view-raw" class="chart-wrap">
+      <div id="raw-overlay" class="processed-overlay">
+        <div class="processed-message">Esperando datos...</div>
+      </div>
+      <div id="raw-charts-container" class="charts-column disabled">
         <div class="chart-card"><canvas id="chart-ir" class="chart-canvas" width="800" height="200"></canvas></div>
         <div class="chart-card"><canvas id="chart-red" class="chart-canvas" width="800" height="200"></canvas></div>
         <div class="chart-card"><canvas id="chart-green" class="chart-canvas" width="800" height="200"></canvas></div>
+      </div>
+    </div>
+    <div id="view-processed" class="chart-wrap" style="display: none;">
+      <div id="processed-overlay" class="processed-overlay">
+        <div class="processed-message">No se han recibido datos de inferencia.</div>
+      </div>
+      <div id="processed-charts-container" class="charts-column disabled">
+        <div class="chart-card">
+          <div class="chart-container">
+            <canvas id="chart-ir-processed" class="chart-canvas" width="800" height="200"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-container">
+            <canvas id="chart-red-processed" class="chart-canvas" width="800" height="200"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-container">
+            <canvas id="chart-green-processed" class="chart-canvas" width="800" height="200"></canvas>
+          </div>
+        </div>
       </div>
     </div>
   </div>

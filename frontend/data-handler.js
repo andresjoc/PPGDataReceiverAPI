@@ -3,11 +3,21 @@
 export function parsePayload(payload, pageLoadTs) {
   if (!payload || typeof payload !== 'object') return null;
 
+  let rawPayload = payload;
+  let inference = null;
+
+  if (payload.raw) {
+    rawPayload = payload.raw;
+    inference = payload.inference;
+  }
+
+  let result = null;
+
   // Legacy format: payload.samples = [[timestamp, value], ...]
-  if (payload.samples && Array.isArray(payload.samples)) {
+  if (rawPayload.samples && Array.isArray(rawPayload.samples)) {
     const newTs = [];
     const colData = [[]];
-    for (const s of payload.samples) {
+    for (const s of rawPayload.samples) {
       if (Array.isArray(s) && s.length >= 2) {
         const sec = (Number(s[0]) - pageLoadTs) / 1000;
         newTs.push(sec);
@@ -18,14 +28,14 @@ export function parsePayload(payload, pageLoadTs) {
         colData[0].push(Array.isArray(s) ? s[0] : s);
       }
     }
-    return { columns: ['PPG'], timestampsSec: newTs, columnsData: colData };
+    result = { columns: ['PPG'], timestampsSec: newTs, columnsData: colData };
   }
 
   // Pandas orient='split' format: {columns: [...], index: [...], data: [[...], ...]}
-  if (payload.columns && payload.index && payload.data) {
-    const columns = payload.columns;
-    const index = payload.index;
-    const rows = payload.data;
+  else if (rawPayload.columns && rawPayload.index && rawPayload.data) {
+    const columns = rawPayload.columns;
+    const index = rawPayload.index;
+    const rows = rawPayload.data;
     const columnsData = columns.map(() => []);
     const newTs = [];
     for (let r = 0; r < rows.length; r++) {
@@ -42,8 +52,11 @@ export function parsePayload(payload, pageLoadTs) {
         columnsData[c].push(rows[r][c]);
       }
     }
-    return { columns, timestampsSec: newTs, columnsData };
+    result = { columns, timestampsSec: newTs, columnsData };
   }
 
-  return null;
+  if (result) {
+    result.inference = inference;
+  }
+  return result;
 }

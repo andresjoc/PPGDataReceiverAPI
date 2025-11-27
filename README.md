@@ -46,8 +46,10 @@ Use cases:
 - WebSocket endpoint (`/ws`) that broadcasts incoming data to connected clients.
 - CSV storage: each POSTed batch is persisted in `data/` with a UTC timestamp prefix.
 - Simple frontend to connect via WebSocket and plot data (vanilla JS).
+- **Dual-view visualization**: Frontend supports switching between "Original" (raw stream) and "Procesado" (processed 10s window) views via tabs.
+- **Inference visualization**: Displays classification results (SR/AF) and confidence directly on the processed signal charts.
 - Delta-format support: backend can accept either absolute samples or delta-encoded arrays.
- - Optional ML inference: the backend can load a TensorFlow/Keras model (see `backend/infer.py`) from the environment variable `PPG_MODEL_PATH` and run a classification on each received batch. Classification results are printed to the backend logs when available.
+ - Optional ML inference: the backend can load a TensorFlow/Keras model (see `backend/infer.py`) from the environment variable `PPG_MODEL_PATH` and run a classification on each received batch.
 
 ---
 
@@ -167,7 +169,9 @@ Classification results:
 
 - POST `/`  Accepts JSON body with PPG data. Returns `{"status": "ok", "received": true}` on success. The server will:
   - Convert JSON into a pandas DataFrame.
-  - Broadcast the data to WebSocket clients (JSON orient=`split`).
+  - Broadcast a JSON payload to WebSocket clients containing:
+    - `raw`: The original data batch (JSON orient=`split`).
+    - `inference`: (Optional) Classification results, preprocessed signals, and confidence scores if a model is loaded and a full window is available.
   - Save the DataFrame to `data/<UTC-prefix>_ppg.csv`.
 
 - WebSocket `/ws`  Connect with a browser or tool to receive live updates. The backend restricts connections to localhost for basic safety (only `127.0.0.1`, `::1`, or `localhost` are allowed).
@@ -200,9 +204,15 @@ ws.onopen = () => ws.send(JSON.stringify(yourPpgObject));
 
 The `frontend/` folder contains a minimal UI built with plain JavaScript to connect to `/ws`, receive the broadcasted JSON frames, and render them into a chart. Files of interest:
 
-- `frontend/index.html`  entry page
-- `frontend/ws-client.js`  WebSocket client helper
-- `frontend/chart-setup.js`  charting logic
+- `frontend/index.html`  entry page with tab structure.
+- `frontend/ws-client.js`  WebSocket client helper.
+- `frontend/chart-setup.js`  charting logic for both raw and processed views.
+- `frontend/data-handler.js`  parses the unified WebSocket payload.
+
+The frontend supports two visualization modes, switchable via tabs:
+
+- **Original View**: Real-time scrolling plots of the raw PPG signals.
+- **Processed View**: Static plots of the last 10-second window, showing the preprocessed signal and the inference result (Label + Confidence) in the chart title.
 
 You can adapt the frontend to your visualization stack (Chart.js, D3, etc.).
 

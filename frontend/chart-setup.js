@@ -35,7 +35,7 @@ function defaultConfig(label, color) {
       scales: {
         x: {
           type: 'linear',
-          title: { display: true, text: 'Segundos desde carga' },
+          title: { display: true, text: 'Tiempo desde carga (s)' },
           bounds: 'data',
           ticks: { maxTicksLimit: 8, callback: function(tickValue){ const n = (typeof tickValue === 'object' && tickValue !== null && tickValue.value !== undefined) ? Number(tickValue.value) : Number(tickValue); if (Number.isNaN(n)) return ''; return Math.round(n) + 's'; } },
           grid: { color: 'rgba(0,0,0,0.04)' }
@@ -106,49 +106,87 @@ export function ensureChartsForColumns(columns) {
             charts[name] = new Chart(ctx, cfg);
           }
         } catch (err) {
-          console.warn('Could not lazy-init chart for', name, err);
+          console.warn('Could not auto-init chart for', name, err);
         }
       }
     }
   }
-  updateLegend();
 }
 
-function updateLegend() {
-  try {
-    const root = document.getElementById('legend');
-    if (!root) return;
-    root.innerHTML = '';
-    for (const name of Object.keys(charts)) {
-      const ch = charts[name];
-      if (!ch || !ch.data || !ch.data.datasets || ch.data.datasets.length === 0) continue;
-      const ds = ch.data.datasets[0];
-      const item = document.createElement('div');
-      item.className = 'item';
-      const box = document.createElement('div');
-      box.className = 'color-box';
-      box.style.background = ds.borderColor || colorFor(name);
-      box.style.border = '1px solid rgba(0,0,0,0.06)';
-      item.appendChild(box);
-      const label = document.createElement('div');
-      label.textContent = ds.label || name;
-      label.style.fontSize = '0.85rem';
-      label.style.color = 'var(--muted)';
-      item.appendChild(label);
-      root.appendChild(item);
+export let processedCharts = {};
+
+export function initProcessedCharts() {
+  readChartColors();
+  const mapping = { RED: 'chart-red-processed', IR: 'chart-ir-processed', GREEN: 'chart-green-processed' };
+  for (const key of Object.keys(mapping)) {
+    try {
+      const canvas = document.getElementById(mapping[key]);
+      if (!canvas) continue;
+      const ctx = canvas.getContext('2d');
+      const color = colorFor(key);
+      const cfg = defaultConfig(key + ' (Procesado)', color);
+      
+      // Adjust config for static window display
+      cfg.options.parsing = true; // Enable parsing for explicit x/y points
+      cfg.options.scales.x.title.text = 'Tiempo (s)';
+      cfg.options.animation = false;
+      cfg.data.datasets[0].borderColor = color;
+      cfg.data.datasets[0].backgroundColor = color;
+      cfg.data.datasets[0].pointRadius = 0;
+      cfg.data.datasets[0].borderWidth = 1;
+      
+      processedCharts[key.toUpperCase()] = new Chart(ctx, cfg);
+    } catch (err) {
+      console.warn('Could not init processed chart for', key, err);
     }
-  } catch (err) {
-    console.warn('Could not update legend:', err);
   }
 }
 
-export function appendBatch(timestampsSec, columns, columnsData) {
+export function updateProcessedCharts(inferenceData) {
+  if (!inferenceData) return;
+  
+  // Enable view if data is received
+  const overlay = document.getElementById('processed-overlay');
+  const container = document.getElementById('processed-charts-container');
+  if (overlay) overlay.style.display = 'none';
+  if (container) container.classList.remove('disabled');
+  
+  const spanishNames = { RED: 'ROJO', GREEN: 'VERDE', IR: 'INFRARROJO' };
+  for (const channel of Object.keys(inferenceData)) {
+    const data = inferenceData[channel];
+    const chart = processedCharts[channel.toUpperCase()];
+    
+    if (chart) {
+       const signal = data.signal;
+       // Generate data points {x, y} for linear scale
+       const points = signal.map((val, i) => ({ x: i * 0.04, y: val }));
+       
+       chart.data.datasets[0].data = points;
+
+       // Update title with inference result
+       const baseTitle = channel.toUpperCase() + ' (Procesado)';
+       const inferenceText = `${data.label} (${(data.confidence * 100).toFixed(1)}%)`;
+       chart.options.plugins.title.text = `${baseTitle} - ${inferenceText}`;
+
+       chart.update();
+    }
+  }
+}
+
+export function appendBatch(timestamps, columns, columnsData) {
   if (!columns || !Array.isArray(columns)) return;
+
+  // Enable view if data is received
+  const overlay = document.getElementById('raw-overlay');
+  const container = document.getElementById('raw-charts-container');
+  if (overlay && overlay.style.display !== 'none') overlay.style.display = 'none';
+  if (container && container.classList.contains('disabled')) container.classList.remove('disabled');
+
   for (let i = 0; i < columns.length; i++) {
     const name = (columns[i] || '').toString().trim().toUpperCase();
     const ch = charts[name];
     if (!ch) continue;
-    const pts = (columnsData[i] || []).map((v, idx) => ({ x: timestampsSec[idx], y: v }));
+    const pts = (columnsData[i] || []).map((v, idx) => ({ x: timestamps[idx], y: v }));
     if (!ch.data.datasets || ch.data.datasets.length === 0) ch.data.datasets = [{ label: name, data: [] }];
     ch.data.datasets[0].data = ch.data.datasets[0].data.concat(pts);
     // Trim per-chart

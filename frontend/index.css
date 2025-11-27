@@ -46,6 +46,7 @@ body {
 .header {
   display:flex;
   align-items:center;
+  justify-content: space-between; /* Push tabs to the right */
   gap:1rem;
   margin-bottom:0.75rem;
 }
@@ -69,6 +70,12 @@ body {
 
 .charts-column{display:flex;flex-direction:column;gap:0.75rem}
 
+.chart-container {
+  position: relative;
+  height: 240px;
+  width: 100%;
+}
+
 canvas.chart-canvas {
   width:100%;
   height:240px;
@@ -85,11 +92,12 @@ canvas.chart-canvas {
 }
 
 .legend {
-  display:flex;
-  gap:0.5rem;
-  align-items:center;
-  margin-top:0.75rem;
-  flex-wrap:wrap;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted-subtle);
+  padding: 0.5rem;
+  background: rgba(15,23,36,0.03);
+  border-radius: 6px;
 }
 
 .legend .item{
@@ -113,6 +121,42 @@ canvas.chart-canvas {
 
 .legend .label{ color:var(--muted-subtle); }
 
+/* Processed view states */
+.chart-wrap {
+  position: relative;
+}
+
+.processed-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 10;
+  border-radius: var(--radius);
+  backdrop-filter: blur(2px);
+}
+
+.processed-message {
+  background: var(--card-bg);
+  padding: 1rem 2rem;
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(15,23,36,0.1);
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.charts-column.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+  filter: grayscale(0.5);
+}
+
 @media (min-width:900px){
   .chart-wrap{padding:0.5rem 1rem}
 }
@@ -120,4 +164,30 @@ canvas.chart-canvas {
 @media (max-width:600px){
   .title{font-size:1rem}
   canvas#chart{height:260px}
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab {
+  background: transparent;
+  border: 1px solid var(--muted-subtle);
+  color: var(--muted-subtle);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  background: rgba(15,23,36,0.05);
+}
+
+.tab.active {
+  background: var(--accent-1);
+  color: white;
+  border-color: var(--accent-1);
 }

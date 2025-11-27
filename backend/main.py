@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from data import ppg_dict_to_dataframe, store_ppg_dataframe_to_csv
 from infer import Inferer
 from typing import List
+import json
+import numpy as np
 
 
 
@@ -94,18 +96,24 @@ async def receive_data(request: Request, data: dict):
 
     print(f"Received data with {len(data)} samples.")
 
+    response_payload = {
+        "raw": data.to_dict(orient="split")
+    }
+
     if inferer is not None:
         results = inferer.classify(data)
         if results is not None:
-            print("Classification results:")
+            serializable_results = {}
             for channel in results:
-                label = results[channel]["label"]
-                confidence = results[channel]["confidence"]
-                print(f"  Channel {channel}: {label} (confidence: {confidence:.3f})")
-
+                serializable_results[channel] = {
+                    "signal": results[channel]["preprocessed_signal"].tolist(),
+                    "label": results[channel]["label"],
+                    "confidence": float(results[channel]["confidence"])
+                }
+            response_payload["inference"] = serializable_results
 
     # Broadcast to connected WebSocket clients.
-    await manager.broadcast(data.to_json(orient="split"))
+    await manager.broadcast(json.dumps(response_payload))
 
     # Save received dataframe to CSV.
     try:

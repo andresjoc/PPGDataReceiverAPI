@@ -54,9 +54,8 @@ def ppg_dict_to_dataframe(ppg_dict: dict) -> pandas.DataFrame:
     return pandas.DataFrame(new_dict, index=index)
 
 def store_ppg_dataframe_to_csv(folder: str, df: pandas.DataFrame) -> str:
-    """Stores the PPG DataFrame to a CSV file with a timestamped filename and returns the file path."""
-    timestamp_prefix = Datetime.now().strftime("%Y%m%d_%H%M%S")
-    filepath = __store_ppg_dataframe_to_csv_with_prefix__(folder, timestamp_prefix, df)
+    """Stores the PPG DataFrame to a single CSV file and returns the file path."""
+    filepath = __store_ppg_dataframe_to_csv_with_name__(folder, "ppg.csv", df)
     return filepath
 
 def load_top_n_csv_to_dataframe(folder: str, top_n: int) -> pandas.DataFrame | None:
@@ -96,15 +95,15 @@ def load_top_n_csv_to_dataframe(folder: str, top_n: int) -> pandas.DataFrame | N
 
     return pandas.concat(dfs, axis=0)
 
-def __store_ppg_dataframe_to_csv_with_prefix__(folder: str, prefix: str, df: pandas.DataFrame) -> str:
+def __store_ppg_dataframe_to_csv_with_name__(folder: str, filename: str, df: pandas.DataFrame) -> str:
     """Stores the PPG DataFrame to a CSV file and returns the file path."""
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-    filename = f"{prefix}_ppg.csv"
     filepath = os.path.join(folder, filename)
+    file_exists = os.path.exists(filepath)
 
-    df.to_csv(filepath)
+    df.to_csv(filepath, mode="a", header=not file_exists)
     return filepath
 
 def __parse_timestamp_from_name__(name: str) -> Datetime | None:

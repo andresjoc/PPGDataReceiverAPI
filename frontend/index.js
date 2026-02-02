@@ -1,6 +1,11 @@
 import { initCharts, ensureChartsForColumns, appendBatch, initProcessedCharts, updateProcessedCharts } from './chart-setup.js';
 import { connect } from './ws-client.js';
 import { parsePayload } from './data-handler.js';
+<<<<<<< ours
+import { startProcessedRecording } from './processed-recorder.js';
+=======
+import { startProcessedRecording, stopProcessedRecording, isRecording, supportsRecording } from './processed-recorder.js';
+>>>>>>> theirs
 
 const pageLoadTs = Date.now();
 
@@ -30,6 +35,39 @@ if (tabRaw && tabProcessed && viewRaw && viewProcessed) {
   });
 }
 
+const startButton = document.getElementById('processed-start');
+const stopButton = document.getElementById('processed-stop');
+const statusLabel = document.getElementById('processed-recording-status');
+
+if (!supportsRecording() && statusLabel) {
+  statusLabel.textContent = 'Tu navegador no soporta grabación.';
+}
+
+function updateRecordingButtons() {
+  if (!startButton || !stopButton) return;
+  const recording = isRecording();
+  startButton.disabled = recording;
+  stopButton.disabled = !recording;
+}
+
+if (startButton) {
+  startButton.addEventListener('click', () => {
+    if (!supportsRecording()) {
+      console.warn('MediaRecorder not supported in this browser.');
+      return;
+    }
+    startProcessedRecording();
+    updateRecordingButtons();
+  });
+}
+
+if (stopButton) {
+  stopButton.addEventListener('click', () => {
+    stopProcessedRecording();
+    updateRecordingButtons();
+  });
+}
+
 // start websocket and feed parsed payloads into the chart
 connect('ws://localhost:8000/ws', (payload) => {
   const parsed = parsePayload(payload, pageLoadTs);
@@ -49,5 +87,13 @@ connect('ws://localhost:8000/ws', (payload) => {
 
   if (inferenceData) {
     updateProcessedCharts(inferenceData);
+<<<<<<< ours
+    startProcessedRecording();
+=======
+    if (supportsRecording() && !isRecording()) {
+      startProcessedRecording();
+      updateRecordingButtons();
+    }
+>>>>>>> theirs
   }
 });

@@ -151,6 +151,73 @@ canvas.chart-canvas {
   font-weight: 500;
 }
 
+.recording-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(220, 38, 38, 0.08);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.recording-indicator::before {
+  content: '';
+  width: 0.6rem;
+  height: 0.6rem;
+  background: #dc2626;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+<<<<<<< ours
+=======
+.recording-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recording-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.recording-status {
+  font-size: 0.85rem;
+  color: var(--muted-subtle);
+}
+
+.recording-button {
+  border: none;
+  background: var(--accent-1);
+  color: #fff;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.recording-button.secondary {
+  background: var(--accent-2);
+}
+
+.recording-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.recording-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+>>>>>>> theirs
 .charts-column.disabled {
   opacity: 0.3;
   pointer-events: none;
